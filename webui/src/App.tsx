@@ -753,9 +753,29 @@ function App() {
                   <CardContent className="min-h-0 flex-1">
                     <ScrollArea className="h-full p-1 pr-2">
                       <div className="flex flex-col gap-5">
-                    <div className="rounded-xl bg-muted/25 p-4">
-                      <div className="mb-2 text-sm font-semibold">人物速览</div>
-                      <div className="text-sm text-muted-foreground">{profile.intro}</div>
+                    <div className="flex gap-3">
+                      <div className="flex-1 rounded-xl bg-muted/25 p-4">
+                        <div className="mb-2 text-sm font-semibold">人物速览</div>
+                        <div className="text-sm text-muted-foreground">{profile.intro}</div>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <Button variant="secondary" size="sm" onClick={() => void runAnalyze()} disabled={loading.analyze}>
+                              {loading.analyze ? "分析中..." : "更新画像"}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>重新生成人物画像</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <Button variant="secondary" size="sm" onClick={() => void runCompress()} disabled={loading.compress}>
+                              {loading.compress ? "压缩中..." : "压缩历史"}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>压缩该联系人历史会话</TooltipContent>
+                        </Tooltip>
+                      </div>
                     </div>
 
                         <div className="grid grid-cols-1 gap-3 xl:grid-cols-4">
@@ -819,22 +839,6 @@ function App() {
                           <Button onClick={() => void runChat()} disabled={loading.chat}>
                             {loading.chat ? "生成中..." : "生成建议"}
                           </Button>
-                          <Tooltip>
-                            <TooltipTrigger>
-                              <Button variant="secondary" size="icon" onClick={() => void runAnalyze()} disabled={loading.analyze}>
-                                <Sparkles className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>更新画像</TooltipContent>
-                          </Tooltip>
-                          <Tooltip>
-                            <TooltipTrigger>
-                              <Button variant="secondary" size="icon" onClick={() => void runCompress()} disabled={loading.compress}>
-                                <Database className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>压缩历史</TooltipContent>
-                          </Tooltip>
                         </div>
 
                         <div className="flex flex-col gap-2">
