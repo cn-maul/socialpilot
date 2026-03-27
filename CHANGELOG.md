@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.5.0] - 2026-03-27
+
+### Added
+- **AI 提示词自定义**: 支持在设置页面自定义 4 个 AI 提示词。
+  - `Analyze`: 人物画像生成提示词
+  - `Copilot`: 回复建议生成提示词
+  - `Extract`: 对话提取提示词
+  - `Compress`: 历史压缩提示词
+- **提示词重置**: 一键重置所有提示词为默认值。
+- **设置页面分页**: 设置页面拆分为两个子页面。
+  - 基础设置: API URL、Key、Model、数据库路径、超时
+  - 提示词设置: 4 个可自定义提示词编辑器
+
+### Changed
+- 配置文件新增 `prompt_extract`、`prompt_copilot`、`prompt_analyze`、`prompt_compress` 字段。
+- 提示词支持运行时热更新，无需重启服务。
+
 ## [1.4.0] - 2026-03-24
 
 ### Added
