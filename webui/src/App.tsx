@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Toaster, toast } from "sonner"
 import { Moon, Sun, Search, Plus, Trash2, Send, Sparkles, Database, User } from "lucide-react"
 
@@ -76,8 +76,6 @@ type PromptsConfig = {
   default_analyze: string
   default_compress: string
 }
-
-const ContactCharts = lazy(() => import("@/components/contact-charts"))
 
 function normName(c: Contact): string {
   return c.name || c.Name || ""
@@ -757,27 +755,8 @@ function App() {
                       <div className="flex flex-col gap-5">
                     <div className="rounded-xl bg-muted/25 p-4">
                       <div className="mb-2 text-sm font-semibold">人物速览</div>
-                      <div className="mb-3 text-sm text-muted-foreground">{profile.intro}</div>
-                      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                        <div className="rounded-xl bg-muted/35 p-3 text-sm">最近互动：{selectedContact.stats.last_interaction || "暂无"}</div>
-                        <div className="rounded-xl bg-muted/35 p-3 text-sm">压缩会话：{selectedContact.stats.compressed_count || 0}</div>
-                        <div className="rounded-xl bg-muted/35 p-3 text-sm">对方最近一句：{clip(selectedContact.stats.latest_contact_msg || "暂无", 100)}</div>
-                        <div className="rounded-xl bg-muted/35 p-3 text-sm">我最近一句：{clip(selectedContact.stats.latest_user_msg || "暂无", 100)}</div>
-                      </div>
+                      <div className="text-sm text-muted-foreground">{profile.intro}</div>
                     </div>
-
-                        <Suspense
-                          fallback={(
-                            <Card>
-                              <CardHeader>
-                                <CardTitle>图表加载中</CardTitle>
-                              </CardHeader>
-                              <CardContent>正在初始化统计视图...</CardContent>
-                            </Card>
-                          )}
-                        >
-                          <ContactCharts messages={selectedContact.messages} />
-                        </Suspense>
 
                         <div className="grid grid-cols-1 gap-3 xl:grid-cols-4">
                           <div className="rounded-xl bg-muted/30 p-4">
