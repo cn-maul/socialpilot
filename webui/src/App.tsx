@@ -138,17 +138,18 @@ function shortContactSummary(md: string): string {
 function extractProfileSections(md: string) {
   const src = String(md || "")
   if (!src.trim()) {
-    return { intro: "暂无画像", core: "暂无", pref: "暂无", relation: "暂无" }
+    return { intro: "暂无画像", mbti: "暂无", core: "暂无", pref: "暂无", relation: "暂无" }
   }
 
   const lines = src.split("\n")
   let key = ""
-  const sections: Record<string, string[]> = { core: [], pref: [], relation: [], other: [] }
+  const sections: Record<string, string[]> = { mbti: [], core: [], pref: [], relation: [], other: [] }
 
   for (const raw of lines) {
     const line = raw.trim()
     if (/^##+\s*/.test(line)) {
-      if (line.includes("核心") || line.includes("特征") || line.includes("性格")) key = "core"
+      if (line.includes("MBTI") || line.includes("人格")) key = "mbti"
+      else if (line.includes("核心") || line.includes("特征") || line.includes("性格")) key = "core"
       else if (line.includes("雷区") || line.includes("偏好") || line.includes("沟通")) key = "pref"
       else if (line.includes("关系温度") || line.includes("关系评估") || line.includes("亲密度")) key = "relation"
       else key = "other"
@@ -166,7 +167,8 @@ function extractProfileSections(md: string) {
     return clip(parts.slice(0, limit).join("；"), 180)
   }
 
-  let core = pickKeyLines(sections.core.join("\n"), 3)
+  let mbti = pickKeyLines(sections.mbti.join("\n"), 2)
+  let core = pickKeyLines(sections.core.join("\n"), 2)
   let pref = pickKeyLines(sections.pref.join("\n"), 3)
   let relation = pickKeyLines(sections.relation.join("\n"), 3)
 
@@ -176,18 +178,20 @@ function extractProfileSections(md: string) {
     .map((x) => stripMd(x))
     .filter((x) => x.length >= 2)
 
-  if (!core && fallbackParts[0]) core = clip(fallbackParts[0], 80)
-  if (!pref && fallbackParts[1]) pref = clip(fallbackParts[1], 80)
-  if (!relation && fallbackParts[2]) relation = clip(fallbackParts[2], 80)
+  if (!mbti && fallbackParts[0]) mbti = clip(fallbackParts[0], 80)
+  if (!core && fallbackParts[1]) core = clip(fallbackParts[1], 80)
+  if (!pref && fallbackParts[2]) pref = clip(fallbackParts[2], 80)
+  if (!relation && fallbackParts[3]) relation = clip(fallbackParts[3], 80)
 
-  core = core || "暂无"
-  pref = pref || "暂无"
-  relation = relation || "暂无"
+  mbti = mbti || "-"
+  core = core || "-"
+  pref = pref || "-"
+  relation = relation || "-"
 
-  const introBase = [core, pref, relation].filter(Boolean).join("；")
+  const introBase = [mbti, core, pref, relation].filter(x => x && x !== "-").join("；")
   const intro = clip(introBase || stripMd(src), 140) || "暂无画像"
 
-  return { intro, core, pref, relation }
+  return { intro, mbti, core, pref, relation }
 }
 
 async function apiGet<T>(url: string): Promise<T> {
@@ -225,7 +229,7 @@ function App() {
   const [addTag, setAddTag] = useState("朋友")
 
   const [detail, setDetail] = useState<DetailPayload | null>(null)
-  const [profile, setProfile] = useState({ intro: "暂无画像", core: "-", pref: "-", relation: "-" })
+  const [profile, setProfile] = useState({ intro: "暂无画像", mbti: "-", core: "-", pref: "-", relation: "-" })
 
   const [logText, setLogText] = useState("")
   const [chatText, setChatText] = useState("")
@@ -775,7 +779,11 @@ function App() {
                           <ContactCharts messages={selectedContact.messages} />
                         </Suspense>
 
-                        <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
+                        <div className="grid grid-cols-1 gap-3 xl:grid-cols-4">
+                          <div className="rounded-xl bg-muted/30 p-4">
+                            <div className="mb-2 text-sm font-semibold">MBTI人格</div>
+                            <div className="text-sm text-muted-foreground">{profile.mbti}</div>
+                          </div>
                           <div className="rounded-xl bg-muted/30 p-4">
                             <div className="mb-2 text-sm font-semibold">核心特征</div>
                             <div className="text-sm text-muted-foreground">{profile.core}</div>
