@@ -936,13 +936,14 @@ function App() {
         </TabsContent>
 
         <TabsContent className="mt-2 min-h-0 flex-1" value="settings">
-          <Tabs defaultValue="basic" className="h-full">
+          <Tabs defaultValue="basic" className="flex h-full flex-col">
             <TabsList className="mb-4 h-10 w-fit gap-1 rounded-lg px-1">
               <TabsTrigger className="px-4 text-sm" value="basic">基础设置</TabsTrigger>
               <TabsTrigger className="px-4 text-sm" value="prompts">提示词设置</TabsTrigger>
             </TabsList>
 
-            <TabsContent className="min-h-0" value="basic">
+            <div className="min-h-0 flex-1 overflow-auto">
+              <TabsContent className="min-h-0" value="basic">
               <div className="flex justify-center">
                 <Card className="w-full max-w-2xl">
                   <CardHeader>
@@ -1059,6 +1060,7 @@ function App() {
                 </Card>
               </div>
             </TabsContent>
+            </div>
           </Tabs>
         </TabsContent>
       </Tabs>
