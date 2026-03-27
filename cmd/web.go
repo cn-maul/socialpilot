@@ -14,6 +14,7 @@ import (
 
 	"socialpilot/internal/config"
 	"socialpilot/internal/db"
+	"socialpilot/internal/llm"
 	"socialpilot/internal/service"
 )
 
@@ -30,6 +31,9 @@ func newWebCmd() *cobra.Command {
 
 			mux.HandleFunc("/api/config/get", handleConfigGet)
 			mux.HandleFunc("/api/config/set", handleConfigSet)
+			mux.HandleFunc("/api/prompts/get", handlePromptsGet)
+			mux.HandleFunc("/api/prompts/set", handlePromptsSet)
+			mux.HandleFunc("/api/prompts/reset", handlePromptsReset)
 
 			mux.HandleFunc("/api/contact/add", handleContactAdd)
 			mux.HandleFunc("/api/contact/delete", handleContactDelete)
@@ -170,6 +174,106 @@ func handleConfigSet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeOK(w, map[string]any{"status": "success", "config_path": p})
+}
+
+func handlePromptsGet(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeErr(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+	cfg, _, err := config.Load()
+	if err != nil {
+		writeErr(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// Get defaults
+	defExtract, defCopilot, defAnalyze, defCompress := llm.GetDefaultPrompts()
+
+	writeOK(w, map[string]any{
+		"status": "success",
+		"prompts": map[string]any{
+			"extract":            cfg.PromptExtract,
+			"copilot":            cfg.PromptCopilot,
+			"analyze":            cfg.PromptAnalyze,
+			"compress":           cfg.PromptCompress,
+			"default_extract":    defExtract,
+			"default_copilot":    defCopilot,
+			"default_analyze":    defAnalyze,
+			"default_compress":   defCompress,
+		},
+	})
+}
+
+func handlePromptsSet(w http.ResponseWriter, r *http.Request) {
+	if !isPOST(w, r) {
+		return
+	}
+	var req struct {
+		Extract  string `json:"prompt_extract"`
+		Copilot  string `json:"prompt_copilot"`
+		Analyze  string `json:"prompt_analyze"`
+		Compress string `json:"prompt_compress"`
+	}
+	if !decodeReq(w, r, &req) {
+		return
+	}
+	cfg, p, err := config.Load()
+	if err != nil {
+		writeErr(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// Update prompts (only if provided)
+	if req.Extract != "" {
+		cfg.PromptExtract = req.Extract
+	}
+	if req.Copilot != "" {
+		cfg.PromptCopilot = req.Copilot
+	}
+	if req.Analyze != "" {
+		cfg.PromptAnalyze = req.Analyze
+	}
+	if req.Compress != "" {
+		cfg.PromptCompress = req.Compress
+	}
+
+	if err := config.Save(p, cfg); err != nil {
+		writeErr(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// Apply prompts immediately
+	llm.SetPrompts(cfg.PromptExtract, cfg.PromptCopilot, cfg.PromptAnalyze, cfg.PromptCompress)
+
+	writeOK(w, map[string]any{"status": "success"})
+}
+
+func handlePromptsReset(w http.ResponseWriter, r *http.Request) {
+	if !isPOST(w, r) {
+		return
+	}
+	cfg, p, err := config.Load()
+	if err != nil {
+		writeErr(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// Clear custom prompts (use defaults)
+	cfg.PromptExtract = ""
+	cfg.PromptCopilot = ""
+	cfg.PromptAnalyze = ""
+	cfg.PromptCompress = ""
+
+	if err := config.Save(p, cfg); err != nil {
+		writeErr(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// Reset to defaults in memory
+	llm.ResetPrompts()
+
+	writeOK(w, map[string]any{"status": "success"})
 }
 
 func handleContactAdd(w http.ResponseWriter, r *http.Request) {

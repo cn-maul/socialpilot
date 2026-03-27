@@ -66,6 +66,17 @@ type LlmConfig = {
   timeout_seconds: number
 }
 
+type PromptsConfig = {
+  extract: string
+  copilot: string
+  analyze: string
+  compress: string
+  default_extract: string
+  default_copilot: string
+  default_analyze: string
+  default_compress: string
+}
+
 const ContactCharts = lazy(() => import("@/components/contact-charts"))
 
 function normName(c: Contact): string {
@@ -229,8 +240,20 @@ function App() {
     timeout_seconds: 60,
   })
 
+  const [prompts, setPrompts] = useState<PromptsConfig>({
+    extract: "",
+    copilot: "",
+    analyze: "",
+    compress: "",
+    default_extract: "",
+    default_copilot: "",
+    default_analyze: "",
+    default_compress: "",
+  })
+
   const [loading, setLoading] = useState({
     config: false,
+    prompts: false,
     search: false,
     add: false,
     detail: false,
@@ -279,6 +302,56 @@ function App() {
       toast.error("保存配置失败", { description: String(error) })
     } finally {
       setLoading((s) => ({ ...s, config: false }))
+    }
+  }
+
+  async function loadPrompts() {
+    setLoading((s) => ({ ...s, prompts: true }))
+    try {
+      const res = await apiGet<{ prompts: PromptsConfig }>("/api/prompts/get")
+      setPrompts(res.prompts)
+      toast.success("提示词已加载")
+    } catch (error) {
+      toast.error("加载提示词失败", { description: String(error) })
+    } finally {
+      setLoading((s) => ({ ...s, prompts: false }))
+    }
+  }
+
+  async function savePrompts() {
+    setLoading((s) => ({ ...s, prompts: true }))
+    try {
+      await apiPost("/api/prompts/set", {
+        prompt_extract: prompts.extract,
+        prompt_copilot: prompts.copilot,
+        prompt_analyze: prompts.analyze,
+        prompt_compress: prompts.compress,
+      })
+      toast.success("提示词保存成功")
+    } catch (error) {
+      toast.error("保存提示词失败", { description: String(error) })
+    } finally {
+      setLoading((s) => ({ ...s, prompts: false }))
+    }
+  }
+
+  async function resetPrompts() {
+    if (!window.confirm("确定要重置所有提示词为默认值吗？")) return
+    setLoading((s) => ({ ...s, prompts: true }))
+    try {
+      await apiPost("/api/prompts/reset", {})
+      setPrompts((s) => ({
+        ...s,
+        extract: "",
+        copilot: "",
+        analyze: "",
+        compress: "",
+      }))
+      toast.success("提示词已重置为默认值")
+    } catch (error) {
+      toast.error("重置提示词失败", { description: String(error) })
+    } finally {
+      setLoading((s) => ({ ...s, prompts: false }))
     }
   }
 
@@ -445,6 +518,7 @@ function App() {
 
   useEffect(() => {
     void loadConfig()
+    void loadPrompts()
     void searchContacts()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -854,51 +928,123 @@ function App() {
         </TabsContent>
 
         <TabsContent className="mt-2 min-h-0 flex-1" value="settings">
-          <div className="flex justify-center">
-            <Card className="w-full max-w-2xl">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Database className="h-5 w-5" />
-                  AI 与系统设置
-                </CardTitle>
-                <CardDescription>这里的配置将用于 log/chat/analyze/compress 调用。</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <FieldGroup className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <Field className="md:col-span-2">
-                    <FieldLabel htmlFor="cfg-baseurl">Base URL</FieldLabel>
-                    <Input id="cfg-baseurl" placeholder="https://api.openai.com/v1" value={config.baseurl} onChange={(e) => setConfig((s) => ({ ...s, baseurl: e.target.value }))} />
-                  </Field>
-                  <Field className="md:col-span-2">
-                    <FieldLabel htmlFor="cfg-apikey">API Key</FieldLabel>
-                    <Input id="cfg-apikey" type="password" placeholder="sk-..." value={config.apikey} onChange={(e) => setConfig((s) => ({ ...s, apikey: e.target.value }))} />
-                  </Field>
-                  <Field>
-                    <FieldLabel htmlFor="cfg-model">Model</FieldLabel>
-                    <Input id="cfg-model" placeholder="gpt-4o" value={config.model} onChange={(e) => setConfig((s) => ({ ...s, model: e.target.value }))} />
-                  </Field>
-                  <Field>
-                    <FieldLabel htmlFor="cfg-timeout">超时（秒）</FieldLabel>
-                    <Input
-                      id="cfg-timeout"
-                      type="number"
-                      value={String(config.timeout_seconds)}
-                      onChange={(e) => setConfig((s) => ({ ...s, timeout_seconds: Number.parseInt(e.target.value || "60", 10) || 60 }))}
-                    />
-                  </Field>
-                  <Field className="md:col-span-2">
-                    <FieldLabel htmlFor="cfg-db">数据库路径</FieldLabel>
-                    <Input id="cfg-db" value={config.db_path} onChange={(e) => setConfig((s) => ({ ...s, db_path: e.target.value }))} />
-                  </Field>
-                </FieldGroup>
-              </CardContent>
-              <CardFooter className="flex gap-2">
-                <Button onClick={() => void saveConfig()} disabled={loading.config}>
-                  {loading.config ? "保存中..." : "保存设置"}
-                </Button>
-              </CardFooter>
-            </Card>
-          </div>
+          <ScrollArea className="h-full">
+            <div className="flex flex-col gap-5 pb-5">
+              <div className="flex justify-center">
+                <Card className="w-full max-w-2xl">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Database className="h-5 w-5" />
+                      AI 与系统设置
+                    </CardTitle>
+                    <CardDescription>这里的配置将用于 log/chat/analyze/compress 调用。</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <FieldGroup className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      <Field className="md:col-span-2">
+                        <FieldLabel htmlFor="cfg-baseurl">Base URL</FieldLabel>
+                        <Input id="cfg-baseurl" placeholder="https://api.openai.com/v1" value={config.baseurl} onChange={(e) => setConfig((s) => ({ ...s, baseurl: e.target.value }))} />
+                      </Field>
+                      <Field className="md:col-span-2">
+                        <FieldLabel htmlFor="cfg-apikey">API Key</FieldLabel>
+                        <Input id="cfg-apikey" type="password" placeholder="sk-..." value={config.apikey} onChange={(e) => setConfig((s) => ({ ...s, apikey: e.target.value }))} />
+                      </Field>
+                      <Field>
+                        <FieldLabel htmlFor="cfg-model">Model</FieldLabel>
+                        <Input id="cfg-model" placeholder="gpt-4o" value={config.model} onChange={(e) => setConfig((s) => ({ ...s, model: e.target.value }))} />
+                      </Field>
+                      <Field>
+                        <FieldLabel htmlFor="cfg-timeout">超时（秒）</FieldLabel>
+                        <Input
+                          id="cfg-timeout"
+                          type="number"
+                          value={String(config.timeout_seconds)}
+                          onChange={(e) => setConfig((s) => ({ ...s, timeout_seconds: Number.parseInt(e.target.value || "60", 10) || 60 }))}
+                        />
+                      </Field>
+                      <Field className="md:col-span-2">
+                        <FieldLabel htmlFor="cfg-db">数据库路径</FieldLabel>
+                        <Input id="cfg-db" value={config.db_path} onChange={(e) => setConfig((s) => ({ ...s, db_path: e.target.value }))} />
+                      </Field>
+                    </FieldGroup>
+                  </CardContent>
+                  <CardFooter className="flex gap-2">
+                    <Button onClick={() => void saveConfig()} disabled={loading.config}>
+                      {loading.config ? "保存中..." : "保存设置"}
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </div>
+
+              <div className="flex justify-center">
+                <Card className="w-full max-w-2xl">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Sparkles className="h-5 w-5" />
+                      AI 提示词设置
+                    </CardTitle>
+                    <CardDescription>自定义 AI 提示词。留空则使用默认提示词。修改后点击保存即可生效。</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <FieldGroup className="flex flex-col gap-4">
+                      <Field>
+                        <FieldLabel htmlFor="prompt-analyze">人物画像提示词 (Analyze)</FieldLabel>
+                        <FieldDescription>用于生成联系人画像的提示词</FieldDescription>
+                        <Textarea
+                          id="prompt-analyze"
+                          className="min-h-[200px] font-mono text-sm"
+                          placeholder={prompts.default_analyze || "留空使用默认提示词..."}
+                          value={prompts.analyze}
+                          onChange={(e) => setPrompts((s) => ({ ...s, analyze: e.target.value }))}
+                        />
+                      </Field>
+                      <Field>
+                        <FieldLabel htmlFor="prompt-copilot">回复建议提示词 (Copilot)</FieldLabel>
+                        <FieldDescription>用于生成回复建议的提示词</FieldDescription>
+                        <Textarea
+                          id="prompt-copilot"
+                          className="min-h-[150px] font-mono text-sm"
+                          placeholder={prompts.default_copilot || "留空使用默认提示词..."}
+                          value={prompts.copilot}
+                          onChange={(e) => setPrompts((s) => ({ ...s, copilot: e.target.value }))}
+                        />
+                      </Field>
+                      <Field>
+                        <FieldLabel htmlFor="prompt-extract">对话提取提示词 (Extract)</FieldLabel>
+                        <FieldDescription>用于从非结构化文本提取对话的提示词</FieldDescription>
+                        <Textarea
+                          id="prompt-extract"
+                          className="min-h-[120px] font-mono text-sm"
+                          placeholder={prompts.default_extract || "留空使用默认提示词..."}
+                          value={prompts.extract}
+                          onChange={(e) => setPrompts((s) => ({ ...s, extract: e.target.value }))}
+                        />
+                      </Field>
+                      <Field>
+                        <FieldLabel htmlFor="prompt-compress">对话压缩提示词 (Compress)</FieldLabel>
+                        <FieldDescription>用于压缩历史对话的提示词</FieldDescription>
+                        <Textarea
+                          id="prompt-compress"
+                          className="min-h-[100px] font-mono text-sm"
+                          placeholder={prompts.default_compress || "留空使用默认提示词..."}
+                          value={prompts.compress}
+                          onChange={(e) => setPrompts((s) => ({ ...s, compress: e.target.value }))}
+                        />
+                      </Field>
+                    </FieldGroup>
+                  </CardContent>
+                  <CardFooter className="flex gap-2">
+                    <Button onClick={() => void savePrompts()} disabled={loading.prompts}>
+                      {loading.prompts ? "保存中..." : "保存提示词"}
+                    </Button>
+                    <Button variant="secondary" onClick={() => void resetPrompts()} disabled={loading.prompts}>
+                      重置为默认
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </div>
+            </div>
+          </ScrollArea>
         </TabsContent>
       </Tabs>
     </div>

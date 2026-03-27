@@ -505,6 +505,9 @@ func OpenService(requireLLM bool) (*Service, func(), error) {
 		return nil, nil, fmt.Errorf("open database failed: %w", err)
 	}
 
+	// Load custom prompts from config
+	llm.SetPrompts(cfg.PromptExtract, cfg.PromptCopilot, cfg.PromptAnalyze, cfg.PromptCompress)
+
 	var llmClient *llm.Client
 	if requireLLM {
 		if strings.TrimSpace(cfg.BaseURL) == "" || strings.TrimSpace(cfg.APIKey) == "" || strings.TrimSpace(cfg.Model) == "" {

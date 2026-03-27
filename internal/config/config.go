@@ -12,6 +12,11 @@ type Config struct {
 	Model          string `json:"model"`
 	DBPath         string `json:"db_path"`
 	TimeoutSeconds int    `json:"timeout_seconds"`
+	// Custom prompts (empty means use default)
+	PromptExtract  string `json:"prompt_extract,omitempty"`
+	PromptCopilot  string `json:"prompt_copilot,omitempty"`
+	PromptAnalyze  string `json:"prompt_analyze,omitempty"`
+	PromptCompress string `json:"prompt_compress,omitempty"`
 }
 
 func defaultConfigPath() (string, error) {
