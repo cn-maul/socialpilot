@@ -460,6 +460,7 @@ function App() {
   async function runChat() {
     if (!selectedName || !chatText.trim()) return
     setLoading((s) => ({ ...s, chat: true }))
+    toast.info("正在生成回复建议...", { duration: 2000 })
     try {
       const res = await apiPost<{ advice: Array<{ tone: string; content: string }> }>("/api/chat", {
         name: selectedName,
@@ -494,6 +495,7 @@ function App() {
   async function runAnalyze() {
     if (!selectedName) return
     setLoading((s) => ({ ...s, analyze: true }))
+    toast.info("正在更新画像...", { duration: 2000 })
     try {
       await apiPost("/api/analyze", { name: selectedName })
       await loadDetail(selectedName)
@@ -508,6 +510,7 @@ function App() {
   async function runCompress() {
     if (!selectedName) return
     setLoading((s) => ({ ...s, compress: true }))
+    toast.info("正在压缩历史会话...", { duration: 2000 })
     try {
       await apiPost("/api/compress", { all: false, name: selectedName })
       toast.success("压缩完成")
