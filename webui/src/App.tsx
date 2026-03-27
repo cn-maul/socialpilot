@@ -928,8 +928,13 @@ function App() {
         </TabsContent>
 
         <TabsContent className="mt-2 min-h-0 flex-1" value="settings">
-          <ScrollArea className="h-full">
-            <div className="flex flex-col gap-5 pb-5">
+          <Tabs defaultValue="basic" className="h-full">
+            <TabsList className="mb-4 h-10 w-fit gap-1 rounded-lg px-1">
+              <TabsTrigger className="px-4 text-sm" value="basic">基础设置</TabsTrigger>
+              <TabsTrigger className="px-4 text-sm" value="prompts">提示词设置</TabsTrigger>
+            </TabsList>
+
+            <TabsContent className="min-h-0" value="basic">
               <div className="flex justify-center">
                 <Card className="w-full max-w-2xl">
                   <CardHeader>
@@ -975,7 +980,9 @@ function App() {
                   </CardFooter>
                 </Card>
               </div>
+            </TabsContent>
 
+            <TabsContent className="min-h-0" value="prompts">
               <div className="flex justify-center">
                 <Card className="w-full max-w-2xl">
                   <CardHeader>
@@ -1043,8 +1050,8 @@ function App() {
                   </CardFooter>
                 </Card>
               </div>
-            </div>
-          </ScrollArea>
+            </TabsContent>
+          </Tabs>
         </TabsContent>
       </Tabs>
     </div>
