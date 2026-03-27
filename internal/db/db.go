@@ -9,9 +9,14 @@ import (
 )
 
 func Open(path string) (*sqlx.DB, error) {
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return nil, err
+	// Only create directory if path contains a directory component
+	dir := filepath.Dir(path)
+	if dir != "" && dir != "." && dir != "/" {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			return nil, err
+		}
 	}
+
 	db, err := sqlx.Open("sqlite", path)
 	if err != nil {
 		return nil, err

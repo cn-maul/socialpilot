@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -17,6 +18,13 @@ import (
 	"socialpilot/internal/llm"
 	"socialpilot/internal/service"
 )
+
+var embeddedWebUI fs.FS
+
+// SetWebUI sets the embedded web UI filesystem
+func SetWebUI(fsys fs.FS) {
+	embeddedWebUI = fsys
+}
 
 func newWebCmd() *cobra.Command {
 	var host string
@@ -61,6 +69,60 @@ func newWebCmd() *cobra.Command {
 }
 
 func registerWebUI(mux *http.ServeMux) {
+	// Use embedded filesystem if available
+	if embeddedWebUI != nil {
+		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			if r.Method != http.MethodGet && r.Method != http.MethodHead {
+				writeErr(w, http.StatusMethodNotAllowed, "method not allowed")
+				return
+			}
+
+			path := strings.TrimPrefix(r.URL.Path, "/")
+			if path == "" {
+				path = "index.html"
+			}
+
+			// Try to read file from embedded FS
+			content, err := fs.ReadFile(embeddedWebUI, path)
+			if err != nil {
+				// File not found, serve index.html for SPA routing
+				content, err = fs.ReadFile(embeddedWebUI, "index.html")
+				if err != nil {
+					http.NotFound(w, r)
+					return
+				}
+				path = "index.html"
+			}
+
+			// Set proper content type based on file extension
+			ext := filepath.Ext(path)
+			switch ext {
+			case ".html":
+				w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			case ".css":
+				w.Header().Set("Content-Type", "text/css; charset=utf-8")
+			case ".js":
+				w.Header().Set("Content-Type", "application/javascript")
+			case ".json":
+				w.Header().Set("Content-Type", "application/json")
+			case ".svg":
+				w.Header().Set("Content-Type", "image/svg+xml")
+			case ".png":
+				w.Header().Set("Content-Type", "image/png")
+			case ".jpg", ".jpeg":
+				w.Header().Set("Content-Type", "image/jpeg")
+			case ".woff", ".woff2":
+				w.Header().Set("Content-Type", "font/woff2")
+			case ".ico":
+				w.Header().Set("Content-Type", "image/x-icon")
+			}
+
+			w.Write(content)
+		})
+		return
+	}
+
+	// Fallback to filesystem (for development without embedding)
 	distDir := filepath.Join("webui", "dist")
 	indexPath := filepath.Join(distDir, "index.html")
 	distAbs, _ := filepath.Abs(distDir)

@@ -511,7 +511,7 @@ func OpenService(requireLLM bool) (*Service, func(), error) {
 	var llmClient *llm.Client
 	if requireLLM {
 		if strings.TrimSpace(cfg.BaseURL) == "" || strings.TrimSpace(cfg.APIKey) == "" || strings.TrimSpace(cfg.Model) == "" {
-			return nil, nil, fmt.Errorf("missing llm config, run: socialpilot config set --baseurl ... --apikey ... --model ...")
+			return nil, nil, fmt.Errorf("AI 配置缺失，请先在「设置」页面配置 Base URL、API Key 和 Model")
 		}
 		llmClient = llm.New(cfg.BaseURL, cfg.APIKey, cfg.Model, time.Duration(cfg.TimeoutSeconds)*time.Second)
 	}

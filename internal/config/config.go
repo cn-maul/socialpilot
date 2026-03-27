@@ -20,19 +20,23 @@ type Config struct {
 }
 
 func defaultConfigPath() (string, error) {
-	home, err := os.UserHomeDir()
+	// Use executable directory
+	exe, err := os.Executable()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(home, ".config", "socialpilot", "config.json"), nil
+	dir := filepath.Dir(exe)
+	return filepath.Join(dir, "config.json"), nil
 }
 
 func defaultDBPath() (string, error) {
-	home, err := os.UserHomeDir()
+	// Use executable directory
+	exe, err := os.Executable()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(home, ".local", "share", "socialpilot", "socialpilot.db"), nil
+	dir := filepath.Dir(exe)
+	return filepath.Join(dir, "socialpilot.db"), nil
 }
 
 func Load() (Config, string, error) {

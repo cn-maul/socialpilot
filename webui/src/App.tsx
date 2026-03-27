@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { Toaster, toast } from "sonner"
-import { Moon, Sun, Search, Plus, Trash2, Send, Sparkles, Database, User } from "lucide-react"
+import { Moon, Sun, Search, Plus, Trash2, Send, Sparkles, Database, User, AlertCircle } from "lucide-react"
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -24,6 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 type Contact = {
   ID?: string
@@ -265,6 +266,11 @@ function App() {
     analyze: false,
     compress: false,
   })
+
+  // Check if AI is configured
+  const hasAIConfig = useMemo(() => {
+    return config.baseurl.trim() !== "" && config.apikey.trim() !== "" && config.model.trim() !== ""
+  }, [config.baseurl, config.apikey, config.model])
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("sp_theme")
@@ -745,19 +751,19 @@ function App() {
                       <div className="flex gap-2">
                         <Tooltip>
                           <TooltipTrigger>
-                            <Button variant="secondary" size="icon" onClick={() => void runAnalyze()} disabled={loading.analyze}>
+                            <Button variant="secondary" size="icon" onClick={() => void runAnalyze()} disabled={loading.analyze || !hasAIConfig}>
                               <Sparkles className="h-4 w-4" />
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>更新画像</TooltipContent>
+                          <TooltipContent>{hasAIConfig ? "更新画像" : "需要配置 AI"}</TooltipContent>
                         </Tooltip>
                         <Tooltip>
                           <TooltipTrigger>
-                            <Button variant="secondary" size="icon" onClick={() => void runCompress()} disabled={loading.compress}>
+                            <Button variant="secondary" size="icon" onClick={() => void runCompress()} disabled={loading.compress || !hasAIConfig}>
                               <Database className="h-4 w-4" />
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>压缩历史</TooltipContent>
+                          <TooltipContent>{hasAIConfig ? "压缩历史" : "需要配置 AI"}</TooltipContent>
                         </Tooltip>
                         <Tooltip>
                           <TooltipTrigger>
@@ -807,7 +813,16 @@ function App() {
                           结构化录入（Log）
                         </CardTitle>
                       </CardHeader>
-                      <CardContent>
+                      <CardContent className="flex flex-col gap-3">
+                        {!hasAIConfig && (
+                          <Alert variant="destructive">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertTitle>需要配置 AI</AlertTitle>
+                            <AlertDescription>
+                              此功能需要 AI 支持。请先在「设置」页面配置 Base URL、API Key 和 Model。
+                            </AlertDescription>
+                          </Alert>
+                        )}
                         <FieldGroup>
                           <Field>
                             <FieldLabel htmlFor="log-text">原始描述</FieldLabel>
@@ -816,7 +831,7 @@ function App() {
                         </FieldGroup>
                       </CardContent>
                       <CardFooter className="flex gap-2">
-                        <Button onClick={() => void runLog()} disabled={loading.log}>
+                        <Button onClick={() => void runLog()} disabled={loading.log || !hasAIConfig}>
                           {loading.log ? "录入中..." : "执行录入"}
                         </Button>
                       </CardFooter>
@@ -830,6 +845,15 @@ function App() {
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="flex flex-col gap-3">
+                        {!hasAIConfig && (
+                          <Alert variant="destructive">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertTitle>需要配置 AI</AlertTitle>
+                            <AlertDescription>
+                              此功能需要 AI 支持。请先在「设置」页面配置 Base URL、API Key 和 Model。
+                            </AlertDescription>
+                          </Alert>
+                        )}
                         <FieldGroup>
                           <Field>
                             <FieldLabel htmlFor="chat-text">对方新消息</FieldLabel>
@@ -837,7 +861,7 @@ function App() {
                           </Field>
                         </FieldGroup>
                         <div className="flex gap-2">
-                          <Button onClick={() => void runChat()} disabled={loading.chat}>
+                          <Button onClick={() => void runChat()} disabled={loading.chat || !hasAIConfig}>
                             {loading.chat ? "生成中..." : "生成建议"}
                           </Button>
                         </div>
