@@ -18,8 +18,8 @@ go.work
 *.sqlite
 *.sqlite3
 
-# Config with sensitive data (optional, uncomment if needed)
-# config.json
+# Config with sensitive data (API keys)
+config.json
 
 # IDE
 .idea/
@@ -36,3 +36,6 @@ Thumbs.db
 webui/node_modules/
 webui/dist/
 webui/.vite/
+
+# Logs
+*.log
